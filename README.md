@@ -73,23 +73,6 @@ Runs on **both cores**: networking/HTTP on Core 0, NMEA/LED on Core 1 for a smoo
 
 ---
 
-## 📦 Build (PlatformIO)
-
-Suggested `platformio.ini`:
-```ini
-[env:esp32-s3-devkitc-1]
-platform = espressif32
-board = esp32-s3-devkitc-1
-framework = arduino
-monitor_speed = 115200
-build_flags =
-  -DARDUINO_USB_MODE=1
-  -DARDUINO_USB_CDC_ON_BOOT=1
-lib_deps =
-  adafruit/Adafruit NeoPixel@^1.12.0
-
----
-
 ### 📑 Supported sentences (NMEA 0183)
 
 GPS: GLL, RMC, VTG, GGA, GSA, GSV, DTM, ZDA
