@@ -17,6 +17,16 @@
 #include <DNSServer.h>
 #include "esp_log.h"
 
+// ======================= Verbose logs (solo arranque visible) =======================
+#define VERBOSE 0
+#if VERBOSE
+  #define DBG_PRINTLN(x)   Serial.println(x)
+  #define DBG_PRINTF(...)  Serial.printf(__VA_ARGS__)
+#else
+  #define DBG_PRINTLN(x)   do{}while(0)
+  #define DBG_PRINTF(...)  do{}while(0)
+#endif
+
 // ======================= AP / Captive Portal =======================
 const char* AP_SSID     = "NMEA_Link";
 const char* AP_PASSWORD = "12345678";
@@ -515,7 +525,7 @@ void handleGenerator() {
   html += "<script>";
   html += "const sentencesBySensor={GPS:['GLL','RMC','VTG','GGA','GSA','GSV','DTM','ZDA'],WEATHER:['MWD','MWV','VWR','VWT','MTW'],HEADING:['HDG','HDT','HDM','THS','ROT','RSA'],SOUNDER:['DBT','DPT','DBK','DBS'],VELOCITY:['VHW','VLW','VBW'],RADAR:['TLL','TTM','TLB','OSD'],TRANSDUCER:['XDR'],AIS:['AIVDM','AIVDO'],CUSTOM:[]};";
   html += "let lang=localStorage.getItem('lang')||'en';";
-  html += "const L={en:{title:'NMEA Generator', sensor:'Sensor', sentenceSel:'Sentence type', sentenceInline:'Sentence', interval:'Interval', start:'▶ Start', pause:'⏸ Pause', clear:'🧹 Clear', back:'⬅ NMEA Monitor', baud:'Baudrate'},es:{title:'NMEA Generator', sensor:'Sensor', sentenceSel:'Tipo de sentencia', sentenceInline:'Sentencia', interval:'Intervalo', start:'▶ Iniciar', pause:'⏸ Pausar', clear:'🧹 Limpiar', back:'⬅ NMEA Monitor', baud:'Baudrate'},fr:{title:'NMEA Generator', sensor:'Capteur', sentenceSel:'Type de trame', sentenceInline:'Trame', interval:'Intervalle', start:'▶ Démarrer', pause:'⏸ Pause', clear:'🧹 Effacer', back:'⬅ NMEA Monitor', baud:'Baudrate'}};";
+  html += "const L={en:{title:'NMEA Generator', sensor:'Sensor', sentenceSel:'Sentence type', sentenceInline:'Sentence', interval:'Interval', start:'▶ Start', pause:'⏸ Pause', clear:'🧹 Clear', back:'⬅ NMEA Monitor', baud:'Baudrate'},es:{title:'NMEA Generator', sensor:'Sensor', sentenceSel:'Tipo de sentencia', sentenceInline:'Sentencia', intervalo:'Intervalo', interval:'Intervalo', start:'▶ Iniciar', pause:'⏸ Pausar', clear:'🧹 Limpiar', back:'⬅ NMEA Monitor', baud:'Baudrate'},fr:{title:'NMEA Generator', sensor:'Capteur', sentenceSel:'Type de trame', sentenceInline:'Trame', interval:'Intervalle', start:'▶ Démarrer', pause:'⏸ Pause', clear:'🧹 Effacer', back:'⬅ NMEA Monitor', baud:'Baudrate'}};";
 
   // ---- checksum en vivo ----
   html += "function hex2(n){return n.toString(16).toUpperCase().padStart(2,'0');}";
@@ -614,7 +624,7 @@ void handleToggleGen() {
   if (server.hasArg("state")) {
     bool newState = (server.arg("state") == "1");
     generatorRunning = newState;
-    Serial.println(newState ? "▶ Generator: START" : "⏸ Generator: PAUSE");
+    DBG_PRINTLN(newState ? "▶ Generator: START" : "⏸ Generator: PAUSE");
   }
   noCache();
   server.send(200, "text/plain", generatorRunning ? "RUNNING" : "STOPPED");
@@ -637,21 +647,21 @@ void handleClearGen() {
   xSemaphoreGive(genBufMutex);
   noCache();
   server.send(200, "text/plain", "OK");
-  Serial.println("🧹 Generator visor limpiado");
+  DBG_PRINTLN("🧹 Generator visor limpiado");
 }
 void handleSetMode() {
   String m = server.hasArg("m") ? server.arg("m") : "monitor";
   appMode = (m == "generator") ? MODE_GENERATOR : MODE_MONITOR;
   generatorRunning = false;
   monitorRunning = false;
-  Serial.printf("🔀 Modo => %s\n", (appMode == MODE_GENERATOR) ? "GENERATOR" : "MONITOR");
+  DBG_PRINTF("🔀 Modo => %s\n", (appMode == MODE_GENERATOR) ? "GENERATOR" : "MONITOR");
   noCache();
   server.send(200, "text/plain", (appMode == MODE_GENERATOR) ? "GENERATOR" : "MONITOR");
 }
 void handleSetMonitor() {
   if (server.hasArg("state")) {
     monitorRunning = (server.arg("state") == "1");
-    Serial.println(monitorRunning ? "▶ Monitor: START" : "⏸ Monitor: PAUSE");
+    DBG_PRINTLN(monitorRunning ? "▶ Monitor: START" : "⏸ Monitor: PAUSE");
   }
   noCache();
   server.send(200, "text/plain", monitorRunning ? "RUNNING" : "PAUSED");
@@ -688,14 +698,14 @@ void handleGenSlotEnable() {
   bool en = server.hasArg("en") && (server.arg("en").toInt()==1);
   slots[i].enabled = en;
   server.send(200,"text/plain", en?"1":"0");
-  Serial.printf("⚙️ Slot %d: %s\n", i+1, en ? "ENABLED" : "DISABLED");
+  DBG_PRINTF("⚙️ Slot %d: %s\n", i+1, en ? "ENABLED" : "DISABLED");
 }
 void handleGenSlotSensor() {
   int i = argIndex(); if (i<0) { server.send(400,"text/plain","Bad slot"); return; }
   if (server.hasArg("sensor")) {
     slots[i].sensor = server.arg("sensor");
     if (slots[i].sensor == "CUSTOM") slots[i].sentence = "CUSTOM";
-    Serial.printf("⚙️ Slot %d: sensor = %s\n", i+1, slots[i].sensor.c_str());
+    DBG_PRINTF("⚙️ Slot %d: sensor = %s\n", i+1, slots[i].sensor.c_str());
   }
   server.send(200,"text/plain", slots[i].sensor);
 }
@@ -703,7 +713,7 @@ void handleGenSlotSentence() {
   int i = argIndex(); if (i<0) { server.send(400,"text/plain","Bad slot"); return; }
   if (server.hasArg("sentence")) {
     slots[i].sentence = server.arg("sentence");
-    Serial.printf("⚙️ Slot %d: sentence = %s\n", i+1, slots[i].sentence.c_str());
+    DBG_PRINTF("⚙️ Slot %d: sentence = %s\n", i+1, slots[i].sentence.c_str());
   }
   server.send(200,"text/plain", slots[i].sentence);
 }
@@ -714,14 +724,14 @@ void handleGenSlotText_POST() {
   String incoming = server.hasArg("text") ? server.arg("text") : "";
   slots[i].text = incoming; // llega con *HH desde el navegador
   server.send(200,"text/plain", incoming);
-  Serial.printf("✏️  Slot %d: texto guardado (%u chars)\n", i+1, (unsigned)incoming.length());
+  DBG_PRINTF("✏️  Slot %d: texto guardado (%u chars)\n", i+1, (unsigned)incoming.length());
 }
 void handleGenSlotText_GET() {
   int i = argIndex(); if (i<0) { server.send(400,"text/plain","Bad slot"); return; }
   String incoming = server.hasArg("text") ? server.arg("text") : "";
   slots[i].text = incoming;
   server.send(200,"text/plain", incoming);
-  Serial.printf("✏️  Slot %d: texto guardado (%u chars)\n", i+1, (unsigned)incoming.length());
+  DBG_PRINTF("✏️  Slot %d: texto guardado (%u chars)\n", i+1, (unsigned)incoming.length());
 }
 void handleGenSlotTemplate() {
   int i = argIndex(); if (i<0) { server.send(400,"text/plain","Bad slot"); return; }
@@ -744,7 +754,7 @@ void handleGenSlotTemplate() {
   }
   slots[i].text = t;
   server.send(200,"text/plain", t);
-  Serial.printf("🧩 Slot %d: plantilla (%s/%s)\n", i+1, slots[i].sensor.c_str(), slots[i].sentence.c_str());
+  DBG_PRINTF("🧩 Slot %d: plantilla (%s/%s)\n", i+1, slots[i].sensor.c_str(), slots[i].sentence.c_str());
 }
 void handleGenSlotInterval() {
   int i = argIndex(); if (i<0) { server.send(400,"text/plain","Bad slot"); return; }
@@ -753,7 +763,7 @@ void handleGenSlotInterval() {
   if (ms < 50) ms = 50;
   slotInterval[i] = (unsigned long)ms;
   server.send(200,"text/plain", String(slotInterval[i]));
-  Serial.printf("⏱️ Slot %d: intervalo = %lu ms\n", i+1, slotInterval[i]);
+  DBG_PRINTF("⏱️ Slot %d: intervalo = %lu ms\n", i+1, slotInterval[i]);
 }
 
 // ====== API de estado para sincronizar UI (Generator) ======
@@ -818,7 +828,7 @@ void TaskNMEA(void* pv) {
           sendUDP(out);
           pushGen(out);
           flashLed(pixels.Color(0,0,255)); // azul por envío
-          Serial.printf("TX[%d]: %s\n", i+1, out.c_str());
+          // silencioso: sin prints de tramas
         }
       }
     }
@@ -894,7 +904,7 @@ void setup() {
 
   server.begin();
 
-  // -------- LOGS de arranque --------
+  // -------- LOGS de arranque (únicos visibles) --------
   Serial.println("\n🚀 NMEA Link - boot");
   Serial.printf("📶 AP SSID: %s\n", AP_SSID);
   Serial.print( "📄 IP (AP): " ); Serial.println(apIP.toString());
