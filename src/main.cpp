@@ -125,11 +125,17 @@ String detectSentenceType(const String &line) {
     formatter.toUpperCase();
     if (formatter == "GLL" || formatter == "RMC" || formatter == "VTG" ||
         formatter == "GGA" || formatter == "GSA" || formatter == "GSV" ||
-        formatter == "DTM" || formatter == "ZDA") return "GPS";
+        formatter == "DTM" || formatter == "ZDA" ||
+        // GPS ampliadas
+        formatter == "GNS" || formatter == "GST" || formatter == "GBS" ||
+        formatter == "GRS" || formatter == "RMB" || formatter == "RTE" ||
+        formatter == "BOD" || formatter == "XTE") return "GPS";
     if (formatter == "DBT" || formatter == "DPT" || formatter == "DBK" ||
         formatter == "DBS") return "SOUNDER";
+    // WEATHER (incluye MDA/MTA/MMB/MHU)
     if (formatter == "MWD" || formatter == "MWV" || formatter == "VWR" ||
-        formatter == "VWT" || formatter == "MTW") return "WEATHER";
+        formatter == "VWT" || formatter == "MTW" || formatter == "MTA" ||
+        formatter == "MMB" || formatter == "MHU" || formatter == "MDA") return "WEATHER";
     if (formatter == "HDG" || formatter == "HDT" || formatter == "HDM" ||
         formatter == "THS" || formatter == "ROT" || formatter == "RSA") return "HEADING";
     if (formatter == "VHW" || formatter == "VLW" || formatter == "VBW") return "SPEED";
@@ -159,6 +165,10 @@ String buildAISSentence_VDM() {
   String payload = "AIVDM,1,1,,A,13aG?P0P00PD;88MD5MT?wvl0<0,0";
   return "!" + payload + "*" + nmeaChecksum(payload);
 }
+String buildAISSentence_VDO() {
+  String payload = "AIVDO,1,1,,A,13aG?P0P00PD;88MD5MT?wvl0<0,0";
+  return "!" + payload + "*" + nmeaChecksum(payload);
+}
 String talkerForSensor(const String& sensor) {
   if (sensor == "GPS")        return "GP";
   if (sensor == "AIS")        return "AI";
@@ -173,29 +183,48 @@ String generateSentence(const String& sensor, const String& codeIn) {
   if (sensor.equalsIgnoreCase("CUSTOM") || codeIn.equalsIgnoreCase("CUSTOM")) {
     return ""; // custom: viene del editor
   }
-  String t = talkerForSensor(sensor);
+
   String c = codeIn; c.toUpperCase();
+  String t = talkerForSensor(sensor);
 
-  if (sensor == "AIS") return buildAISSentence_VDM();
+  if (sensor == "AIS") {
+    if (c == "AIVDO") return buildAISSentence_VDO();
+    return buildAISSentence_VDM();
+  }
 
-  // GPS
-  if (t == "GP" && c == "RMC") return buildDollarSentence(t, c, "123519,A,4807.038,N,01131.000,E,5.5,054.7,230394,003.1,W");
-  if (t == "GP" && c == "GGA") return buildDollarSentence(t, c, "123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,");
-  if (t == "GP" && c == "GLL") return buildDollarSentence(t, c, "4916.45,N,12311.12,W,225444,A");
-  if (t == "GP" && c == "VTG") return buildDollarSentence(t, c, "054.7,T,034.4,M,005.5,N,010.2,K");
-  if (t == "GP" && c == "GSA") return buildDollarSentence(t, c, "A,3,04,05,09,12,24,25,29,31,,,,,2.5,1.3,2.1");
-  if (t == "GP" && c == "GSV") return buildDollarSentence(t, c, "2,1,08,01,40,083,41,02,17,308,43,12,07,021,42,14,25,110,45");
-  if (t == "GP" && c == "DTM") return buildDollarSentence(t, c, "W84,,0.0,N,0.0,E,0.0,W84");
-  if (t == "GP" && c == "ZDA") return buildDollarSentence(t, c, "201530.00,04,07,2002,00,00");
+  // ---------- GPS ----------
+  if (sensor == "GPS") {
+    if (c == "RMC") return buildDollarSentence("GP", c, "123519,A,4807.038,N,01131.000,E,5.5,054.7,230394,003.1,W");
+    if (c == "GGA") return buildDollarSentence("GP", c, "123519,4807.038,N,01131.000,E,1,08,0.9,545.4,M,46.9,M,,");
+    if (c == "GLL") return buildDollarSentence("GP", c, "4916.45,N,12311.12,W,225444,A");
+    if (c == "VTG") return buildDollarSentence("GP", c, "054.7,T,034.4,M,005.5,N,010.2,K");
+    if (c == "GSA") return buildDollarSentence("GP", c, "A,3,04,05,09,12,24,25,29,31,,,,,2.5,1.3,2.1");
+    if (c == "GSV") return buildDollarSentence("GP", c, "2,1,08,01,40,083,41,02,17,308,43,12,07,021,42,14,25,110,45");
+    if (c == "DTM") return buildDollarSentence("GP", c, "W84,,0.0,N,0.0,E,0.0,W84");
+    if (c == "ZDA") return buildDollarSentence("GP", c, "201530.00,04,07,2002,00,00");
+    // ampliadas
+    if (c == "GNS") return buildDollarSentence("GN", c, "123519,4807.038,N,01131.000,E,AN,08,0.9,545.4,46.9,,");
+    if (c == "GST") return buildDollarSentence("GP", c, "123519,1.2,1.0,0.8,45.0,0.5,0.5,1.0");
+    if (c == "GBS") return buildDollarSentence("GP", c, "123519,0.5,0.5,0.8,01,0.75,0.00,1.00");
+    if (c == "GRS") return buildDollarSentence("GP", c, "123519,1,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0");
+    if (c == "RMB") return buildDollarSentence("GP", c, "A,0.66,L,ORIG,DEST,4916.45,N,12311.12,W,12.3,054.7,5.5,V");
+    if (c == "RTE") return buildDollarSentence("GP", c, "1,1,c,ROUTE1,WP1,WP2,WP3");
+    if (c == "BOD") return buildDollarSentence("GP", c, "045.0,T,023.0,M,DEST,ORIG");
+    if (c == "XTE") return buildDollarSentence("GP", c, "A,A,0.66,L,N");
+  }
 
-  // WEATHER
+  // ---------- WEATHER ----------
   if (t == "II" && c == "MWD") return buildDollarSentence(t, c, "054.7,T,034.4,M,10.5,N,5.4,M");
   if (t == "II" && c == "MWV") return buildDollarSentence(t, c, "054.7,R,10.5,N,A");
   if (t == "II" && c == "VWR") return buildDollarSentence(t, c, "054.7,R,10.5,N,5.4,M,19.4,K");
   if (t == "II" && c == "VWT") return buildDollarSentence(t, c, "054.7,T,10.5,N,5.4,M,19.4,K");
   if (t == "II" && c == "MTW") return buildDollarSentence(t, c, "18.0,C");
+  if (t == "II" && c == "MTA") return buildDollarSentence(t, c, "19.5,C");
+  if (t == "II" && c == "MMB") return buildDollarSentence(t, c, "29.92,I");
+  if (t == "II" && c == "MHU") return buildDollarSentence(t, c, "45.0,P");
+  if (t == "II" && c == "MDA") return buildDollarSentence(t, c, "29.92,I,1.013,B,19.5,C,18.0,C,,");
 
-  // HEADING
+  // ---------- HEADING ----------
   if (t == "HC" && c == "HDG") return buildDollarSentence(t, c, "238.5,,E,0.5");
   if (t == "HC" && c == "HDT") return buildDollarSentence(t, c, "238.5,T");
   if (t == "HC" && c == "HDM") return buildDollarSentence(t, c, "236.9,M");
@@ -203,26 +232,27 @@ String generateSentence(const String& sensor, const String& codeIn) {
   if (t == "HC" && c == "ROT") return buildDollarSentence(t, c, "0.0,A");
   if (t == "HC" && c == "RSA") return buildDollarSentence(t, c, "0.0,A,0.0,A");
 
-  // SOUNDER
+  // ---------- SOUNDER ----------
   if (t == "SD" && c == "DBT") return buildDollarSentence(t, c, "036.4,f,011.1,M,006.0,F");
   if (t == "SD" && c == "DPT") return buildDollarSentence(t, c, "11.2,0.5");
   if (t == "SD" && c == "DBK") return buildDollarSentence(t, c, "036.4,f,011.1,M,006.0,F");
   if (t == "SD" && c == "DBS") return buildDollarSentence(t, c, "036.4,f,011.1,M,006.0,F");
 
-  // VELOCITY
+  // ---------- VELOCITY ----------
   if (t == "II" && c == "VHW") return buildDollarSentence(t, c, "054.7,T,034.4,M,5.5,N,10.2,K");
   if (t == "II" && c == "VLW") return buildDollarSentence(t, c, "12.4,N,0.5,N");
   if (t == "II" && c == "VBW") return buildDollarSentence(t, c, "5.5,0.1,0.0,5.3,0.1,0.0");
 
-  // RADAR
+  // ---------- RADAR ----------
   if (t == "II" && c == "TLL") return buildDollarSentence(t, c, "1,4916.45,N,12311.12,W,225444,TGT1");
   if (t == "II" && c == "TTM") return buildDollarSentence(t, c, "1,2.5,N,054.7,T,0.0,N,054.7,T,0.0,54.7,TGT1");
   if (t == "II" && c == "TLB") return buildDollarSentence(t, c, "1,LOCK,4916.45,N,12311.12,W,225444");
   if (t == "II" && c == "OSD") return buildDollarSentence(t, c, "054.7,A,5.5,N,10.2,K");
 
-  // TRANSDUCER
+  // ---------- TRANSDUCER ----------
   if (t == "II" && c == "XDR") return buildDollarSentence(t, c, "C,19.5,C,AirTemp");
 
+  // default vacío (pero bien formado)
   return buildDollarSentence(t, c, "");
 }
 
@@ -357,11 +387,28 @@ void handleRoot() {
   html += "function toggleFilter(f,btn){filtersState[f]=!filtersState[f];btn.classList.toggle('active',filtersState[f]);}";
   html += "function toggleAll(){let any=Object.values(filtersState).some(v=>v);Object.keys(filtersState).forEach(k=>filtersState[k]=!any);drawFilters();}";
   html += "function togglePause(){paused=!paused;applyLang();fetch('/setmonitor?state='+(paused?0:1),{cache:'no-store'}).catch(()=>{});}";
-  html += "function clearConsole(){document.getElementById('console').innerHTML='';}";
+
+  // Clear que limpia también buffer del ESP32
+  html += "function clearConsole(){document.getElementById('console').innerHTML='';fetch('/clearnmea',{cache:'no-store'}).catch(()=>{});}";
+
   html += "async function setBaud(b){await fetch('/setbaud?baud='+b,{cache:'no-store'}).catch(()=>{});document.querySelectorAll('.baud').forEach(x=>x.classList.remove('active'));let el=document.getElementById('baud_'+b);if(el)el.classList.add('active');}";
   html += "function setSpeed(mult,btn){document.querySelectorAll('.btn').forEach(b=>{if(b.innerText.includes('%'))b.classList.remove('active');});btn.classList.add('active');intervalMs=Math.max(100,Math.round(1000/mult));if(intervalId)clearInterval(intervalId);intervalId=setInterval(poll,intervalMs);}";
 
-  html += "function poll(){if(paused)return;fetch('/getnmea?ts='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{let c=document.getElementById('console');let lines=t.trim()?t.trim().split('\\n'):[];let visible=lines.filter(l=>{let lb=l.indexOf(']');let type=(lb>0&&l[0]=='[')?l.substring(1,lb):'OTROS';return filtersState[type];});c.innerHTML=visible.map(l=>{let type=l.substring(1,l.indexOf(']'));return '<span class=\\\"'+type+'\\\">'+l+'</span>';}).join('<br>');c.scrollTop=c.scrollHeight;}).catch(()=>{});}";
+  // >>> CAMBIO: traducir etiqueta [OTROS] (y el resto) en el visor según idioma
+  html += "function poll(){if(paused)return;fetch('/getnmea?ts='+Date.now(),{cache:'no-store'}).then(r=>r.text()).then(t=>{";
+  html += "  let c=document.getElementById('console');";
+  html += "  let lines=t.trim()?t.trim().split('\\n'):[];";
+  html += "  let visible=lines.filter(l=>{let lb=l.indexOf(']');let type=(lb>0&&l[0]=='[')?l.substring(1,lb):'OTROS';return filtersState[type];});";
+  html += "  c.innerHTML=visible.map(l=>{";
+  html += "    let lb=l.indexOf(']');";
+  html += "    let type=(lb>0&&l[0]=='[')?l.substring(1,lb):'OTROS';";
+  html += "    let disp=(catLabels[lang]&&catLabels[lang][type])?catLabels[lang][type]:type;";
+  html += "    let rest=(lb>=0)? l.substring(lb+1): l;";
+  html += "    let shown='['+disp+']'+rest;";
+  html += "    return '<span class=\\\"'+type+'\\\">'+shown+'</span>';";
+  html += "  }).join('<br>');";
+  html += "  c.scrollTop=c.scrollHeight;";
+  html += "}).catch(()=>{});}";
 
   html += "async function gotoGenerator(){paused=true;applyLang();try{await fetch('/setmonitor?state=0',{cache:'no-store'});await fetch('/setmode?m=generator',{cache:'no-store'});}catch(e){} window.location='/generator';}";
   html += "document.addEventListener('DOMContentLoaded',()=>{fetch('/setmode?m=monitor',{cache:'no-store'});fetch('/setmonitor?state=0',{cache:'no-store'});let saved=localStorage.getItem('lang');if(saved){lang=saved;let sel=document.getElementById('langSelect');if(sel)sel.value=saved;}applyLang();let b=document.getElementById('baud_" + String(currentBaud) + "');if(b)b.classList.add('active');intervalId=setInterval(poll,intervalMs);});";
@@ -393,9 +440,13 @@ String optionsForSentence(const String& sensor, const String& selected){
     out += ">"; out += v; out += "</option>";
   };
   String out;
-  if(sensor == "GPS"){ const char* arr[]={"GLL","RMC","VTG","GGA","GSA","GSV","DTM","ZDA"};
+  if(sensor == "GPS"){ const char* arr[]={
+      "GLL","RMC","VTG","GGA","GSA","GSV","DTM","ZDA",
+      "GNS","GST","GBS","GRS","RMB","RTE","BOD","XTE"
+    };
     for(const char* v:arr) add(v,out);
-  } else if(sensor=="WEATHER"){ const char* arr[]={"MWD","MWV","VWR","VWT","MTW"};
+  } else if(sensor=="WEATHER"){
+    const char* arr[]={"MWD","MWV","VWR","VWT","MTW","MTA","MMB","MHU","MDA"};
     for(const char* v:arr) add(v,out);
   } else if(sensor=="HEADING"){ const char* arr[]={"HDG","HDT","HDM","THS","ROT","RSA"};
     for(const char* v:arr) add(v,out);
@@ -523,15 +574,15 @@ void handleGenerator() {
 
   // --- JS Generator ---
   html += "<script>";
-  html += "const sentencesBySensor={GPS:['GLL','RMC','VTG','GGA','GSA','GSV','DTM','ZDA'],WEATHER:['MWD','MWV','VWR','VWT','MTW'],HEADING:['HDG','HDT','HDM','THS','ROT','RSA'],SOUNDER:['DBT','DPT','DBK','DBS'],VELOCITY:['VHW','VLW','VBW'],RADAR:['TLL','TTM','TLB','OSD'],TRANSDUCER:['XDR'],AIS:['AIVDM','AIVDO'],CUSTOM:[]};";
+  html += "const sentencesBySensor={GPS:['GLL','RMC','VTG','GGA','GSA','GSV','DTM','ZDA','GNS','GST','GBS','GRS','RMB','RTE','BOD','XTE'],WEATHER:['MWD','MWV','VWR','VWT','MTW','MTA','MMB','MHU','MDA'],HEADING:['HDG','HDT','HDM','THS','ROT','RSA'],SOUNDER:['DBT','DPT','DBK','DBS'],VELOCITY:['VHW','VLW','VBW'],RADAR:['TLL','TTM','TLB','OSD'],TRANSDUCER:['XDR'],AIS:['AIVDM','AIVDO'],CUSTOM:[]};";
   html += "let lang=localStorage.getItem('lang')||'en';";
   html += "const L={en:{title:'NMEA Generator', sensor:'Sensor', sentenceSel:'Sentence type', sentenceInline:'Sentence', interval:'Interval', start:'▶ Start', pause:'⏸ Pause', clear:'🧹 Clear', back:'⬅ NMEA Monitor', baud:'Baudrate'},es:{title:'NMEA Generator', sensor:'Sensor', sentenceSel:'Tipo de sentencia', sentenceInline:'Sentencia', intervalo:'Intervalo', interval:'Intervalo', start:'▶ Iniciar', pause:'⏸ Pausar', clear:'🧹 Limpiar', back:'⬅ NMEA Monitor', baud:'Baudrate'},fr:{title:'NMEA Generator', sensor:'Capteur', sentenceSel:'Type de trame', sentenceInline:'Trame', interval:'Intervalle', start:'▶ Démarrer', pause:'⏸ Pause', clear:'🧹 Effacer', back:'⬅ NMEA Monitor', baud:'Baudrate'}};";
 
-  // ---- checksum en vivo ----
+  // checksum helpers
   html += "function hex2(n){return n.toString(16).toUpperCase().padStart(2,'0');}";
   html += "function csPayload(s){let cs=0;for(let i=0;i<s.length;i++){cs^=s.charCodeAt(i);}return hex2(cs);}";
 
-  // Construye línea completa desde editor (oculta HH en input)
+  // Construye línea completa desde editor
   html += "function buildFullFromEditor(str){ if(!str) return ''; str=str.trim(); let ch=null; if(str[0]==='$'||str[0]==='!'){ ch=str[0]; str=str.slice(1);} let up=str.toUpperCase(); if(!ch) ch=(up.startsWith('AIVDM')||up.startsWith('AIVDO'))?'!':'$'; let payload=str; let hh=csPayload(payload); return ch+payload+'*'+hh; }";
 
   // Rellena sentences del sensor
@@ -686,6 +737,17 @@ void handleSetBaud() {
   } else server.send(400, "text/plain", "Error");
 }
 
+// ====== Clear del buffer del MONITOR ======
+void handleClearNMEA() {
+  xSemaphoreTake(nmeaBufMutex, portMAX_DELAY);
+  for (int i = 0; i < BUFFER_LINES; i++) nmeaBuffer[i] = "";
+  bufferIndex = 0;
+  currentLine = "";
+  xSemaphoreGive(nmeaBufMutex);
+  noCache();
+  server.send(200, "text/plain", "OK");
+}
+
 // ====== API SLOTS (Generator) ======
 int argIndex() {
   if (!server.hasArg("i")) return -1;
@@ -828,7 +890,6 @@ void TaskNMEA(void* pv) {
           sendUDP(out);
           pushGen(out);
           flashLed(pixels.Color(0,0,255)); // azul por envío
-          // silencioso: sin prints de tramas
         }
       }
     }
@@ -878,6 +939,7 @@ void setup() {
   server.on("/setbaud", handleSetBaud);
   server.on("/setmode", handleSetMode);
   server.on("/setmonitor", handleSetMonitor);
+  server.on("/clearnmea", handleClearNMEA);
 
   // Generator
   server.on("/generator", handleGenerator);
