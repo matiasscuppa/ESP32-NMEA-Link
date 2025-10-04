@@ -1,9 +1,0 @@
-{
-	"folders": [
-		{
-			"name": "esp32.nmea.sender",
-			"path": ".."
-		}
-	],
-	"settings": {}
-}
