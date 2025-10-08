@@ -13,12 +13,12 @@ Runs on **both cores**: networking/HTTP on Core 0, NMEA/LED on Core 1 for a smoo
 
 - **Wi-Fi AP**: `SSID: NMEA_Link`, `password: 12345678`, with **captive portal** (auto-opens the web UI).
 - **Dark, mobile-friendly UI** (monospace).
-- **Monitor**:
+- **Mode Monitor**:
   - UART **RX=16** (baud options: 4800 / 9600 / 38400 / 115200).
   - Category filters (GPS, AIS, WEATHER, HEADING, SOUNDER, VELOCITY, RADAR, TRANSDUCER, OTHER).
   - **Start/Pause**, **Clear**, and polling speed (25/50/75/100%).
   - Valid frames forwarded via **UDP 10110** (broadcast).
-- **Generator**:
+- **Mode Generator**:
   - UART **TX=17** + **UDP 10110**.
   - Up to **4 simultaneous slots**, each with:
     - **Sensor** and **sentence** (NMEA 0183) or **CUSTOM**.
