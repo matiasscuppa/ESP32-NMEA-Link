@@ -75,23 +75,23 @@ Runs on **both cores**: networking/HTTP on Core 0, NMEA/LED on Core 1 for a smoo
 
 ### 📑 Supported sentences (NMEA 0183)
 
-GPS: GLL, RMC, VTG, GGA, GSA, GSV, DTM, ZDA
+**GPS**: GLL, RMC, VTG, GGA, GSA, GSV, DTM, ZDA, GNS, GST, GBS, GRS, RMB, RTE, BOD, XTE  
 
-WEATHER: MWD, MWV, VWR, VWT, MTW
+**WEATHER**: MWD, MWV, VWR, VWT, MTW, MTA, MMB, MHU, MDA 
 
-HEADING: HDG, HDT, HDM, THS, ROT, RSA
+**HEADING**: HDG, HDT, HDM, THS, ROT, RSA  
 
-SOUNDER: DBT, DPT, DBK, DBS
+**SOUNDER**: DBT, DPT, DBK, DBS  
 
-VELOCITY: VHW, VLW, VBW
+**VELOCITY**: VHW, VLW, VBW  
 
-RADAR: TLL, TTM, TLB, OSD
+**RADAR**: TLL, TTM, TLB, OSD  
 
-TRANSDUCER: XDR
+**TRANSDUCER**: XDR  
 
-AIS: AIVDM, AIVDO
+**AIS**: AIVDM, AIVDO  
 
-CUSTOM: free-form (editor with auto checksum)
+**CUSTOM**: free-form (editor with auto checksum)
 
 ---
 
