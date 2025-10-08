@@ -103,25 +103,19 @@ OpenPlotter / Signal K / Nav software: listen to UDP 10110 on the Wi-Fi interfac
 
 ### 🔒 Notes / Limitations
 
-UI is served over HTTP (not HTTPS) for simplicity on the ESP32.
-
-Captive portal behavior depends on the client OS (may not always auto-open).
-
-mDNS support varies by OS.
+- UI is served over HTTP (not HTTPS) for simplicity on the ESP32.
+- Captive portal behavior depends on the client OS (might not always auto-open).
+- mDNS support varies by OS.
 
 ---
 
 ### 🗺️ Roadmap
 
-Persist configuration (NVS).
-
-Web OTA.
-
-Export/Import templates.
-
-Static assets (minified/gzip).
-
-Unified language selector with more locales.
+- Persist configuration (NVS).
+- Web OTA.
+- Export/Import templates.
+- Static assets (minified/gzip).
+- Unified language selector with more locales.
 
 ---
 
